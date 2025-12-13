@@ -1,0 +1,196 @@
+{% extends 'core/base.html' %}
+{% load currency_tags %}
+
+{% block title %}Votre panier{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="bi bi-cart3 me-2"></i>Votre panier
+            </h1>
+
+            {% if cart|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Produit</th>
+                            <th class="text-center">Quantité</th>
+                            <th class="text-end">Prix unitaire</th>
+                            <th class="text-end">Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cart %}
+                        {% with product=item.product %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if product.image %}
+                                    <img src="{{ product.image.url }}" alt="{{ product.name }}"
+                                        class="img-thumbnail me-3"
+                                        style="width: 60px; height: 60px; object-fit: cover;">
+                                    {% else %}
+                                    <div class="bg-light d-flex align-items-center justify-content-center me-3"
+                                        style="width: 60px; height: 60px;">
+                                        <i class="bi bi-image text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <h6 class="mb-0">{{ product.name }}</h6>
+                                        <small class="text-muted">{{ product.category.name }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="align-middle text-center">
+                                <form action="{% url 'cart:cart_add' product.id %}" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <div class="input-group input-group-sm" style="width: 120px;">
+                                        <input type="number" name="quantity" value="{{ item.quantity }}" min="1"
+                                            class="form-control text-center" onchange="this.form.submit()">
+                                        <button type="submit" class="btn btn-outline-secondary" title="Mettre à jour">
+                                            <i class="bi bi-arrow-clockwise"></i>
+                                        </button>
+                                    </div>
+                                </form>
+                            </td>
+                            <td class="align-middle text-end">{{ item.price|currency }}</td>
+                            <td class="align-middle text-end fw-bold">{{ item.total_price|currency }}</td>
+                            <td class="align-middle text-end">
+                                <form action="{% url 'cart:cart_remove' product.id %}" method="post"
+                                    class="d-inline remove-from-cart-form" data-product-id="{{ product.id }}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-light">
+                            <td colspan="3" class="text-end fw-bold">Total :</td>
+                            <td class="text-end fw-bold">{{ cart.get_total_price|currency }}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <a href="{% url 'core:home' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Continuer mes achats
+                </a>
+                <div>
+                    <a href="{% url 'orders:order_create' %}" class="btn btn-primary">
+                        Passer la commande <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-cart-x" style="font-size: 4rem; color: #6c757d;"></i>
+                </div>
+                <h3 class="text-muted">Votre panier est vide</h3>
+                <p class="text-muted">Parcourez nos produits et ajoutez des articles à votre panier.</p>
+                <a href="{% url 'core:home' %}" class="btn btn-primary mt-3">
+                    <i class="bi bi-shop me-1"></i> Voir les produits
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Fonction pour mettre à jour le compteur du panier dans la barre de navigation
+    function updateCartCounter(count) {
+        const cartCounter = document.querySelector('.cart-counter');
+        const cartBadge = document.querySelector('.cart-badge');
+
+        if (count > 0) {
+            if (!cartBadge) {
+                // Créer le badge s'il n'existe pas
+                const newBadge = document.createElement('span');
+                newBadge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-badge';
+                newBadge.innerHTML = `${count} <span class="visually-hidden">articles dans le panier</span>`;
+                document.querySelector('.bi-cart3').parentNode.appendChild(newBadge);
+            } else {
+                // Mettre à jour le compteur existant
+                cartBadge.textContent = count;
+            }
+        } else {
+            // Supprimer le badge si le panier est vide
+            if (cartBadge) {
+                cartBadge.remove();
+            }
+        }
+    }
+
+    // Mise à jour automatique de la quantité quand elle est modifiée
+    document.addEventListener('DOMContentLoaded', function () {
+        // Gestion de la mise à jour de la quantité
+        const quantityInputs = document.querySelectorAll('input[name="quantity"]');
+        quantityInputs.forEach(input => {
+            input.addEventListener('change', function () {
+                // Soumettre automatiquement le formulaire quand la quantité change
+                this.form.submit();
+            });
+        });
+
+        // Gestion de la suppression d'un article
+        document.querySelectorAll('.remove-from-cart-form').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                const url = this.action;
+                const productRow = this.closest('tr');
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    },
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Mettre à jour le compteur du panier
+                            updateCartCounter(data.cart_item_count);
+
+                            // Supprimer la ligne du produit du tableau
+                            productRow.remove();
+
+                            // Mettre à jour le total du panier
+                            const totalCell = document.querySelector('tfoot td:nth-child(2)');
+                            if (totalCell) {
+                                totalCell.textContent = data.cart_total + ' €';
+                            }
+
+                            // Si le panier est vide, recharger la page pour afficher le message approprié
+                            if (data.cart_item_count === 0) {
+                                window.location.reload();
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur lors de la suppression du produit:', error);
+                        // En cas d'erreur, recharger la page pour s'assurer que l'interface est cohérente
+                        window.location.reload();
+                    });
+            });
+        });
+    });
+</script>
+{% endblock %}

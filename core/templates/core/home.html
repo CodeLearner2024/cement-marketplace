@@ -1,0 +1,65 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load currency_tags %}
+
+{% block title %}Accueil - Boutique en Ligne{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Produits en vedette</h1>
+    </div>
+</div>
+
+{% if featured_products %}
+<div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4">
+    {% for product in featured_products %}
+    <div class="col">
+        <div class="card product-card">
+            {% if product.image %}
+            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+            {% else %}
+            <div class="bg-light text-center py-5">
+                <span class="text-muted">Pas d'image</span>
+            </div>
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ product.name }}</h5>
+                <p class="card-text">{{ product.description|truncatewords:15 }}</p>
+                <p class="card-text"><strong>{{ product.price|currency }}</strong></p>
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'core:product_detail' id=product.id slug=product.slug %}"
+                        class="btn btn-outline-primary" title="Voir les détails">
+                        <i class="bi bi-eye"></i> Détails
+                    </a>
+                    <button class="btn btn-outline-success add-to-cart" data-product-id="{{ product.id }}"
+                        title="Ajouter au panier">
+                        <i class="bi bi-cart-plus"></i> Panier
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    Aucun produit n'est disponible pour le moment.
+</div>
+{% endif %}
+
+<div class="row mt-5">
+    <div class="col-12">
+        <h2 class="mb-4">Nos catégories</h2>
+        <div class="row">
+            {% for category in categories %}
+            <div class="col-md-2 col-sm-4 mb-3">
+                <a href="{% url 'core:product_list' category.slug %}" class="btn btn-outline-primary w-100">
+                    {{ category.name }}
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

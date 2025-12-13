@@ -1,0 +1,666 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Commander - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'orders/css/order_form.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h1 class="mb-4">Finaliser ma commande</h1>
+
+            {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" id="order-form" class="needs-validation" novalidate>
+                {% csrf_token %}
+
+                <div class="row">
+                    <!-- Colonne de gauche - Formulaire -->
+                    <div class="col-lg-8">
+                        <!-- Section Informations personnelles -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-person me-2"></i>Informations personnelles
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.first_name.id_for_label }}"
+                                            class="form-label required">Prénom</label>
+                                        {{ form.first_name }}
+                                        <div class="invalid-feedback">
+                                            Veuillez entrer votre prénom.
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.last_name.id_for_label }}"
+                                            class="form-label required">Nom</label>
+                                        {{ form.last_name }}
+                                        <div class="invalid-feedback">
+                                            Veuillez entrer votre nom.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label required">Adresse
+                                        email</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                        {{ form.email }}
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        Veuillez entrer une adresse email valide.
+                                    </div>
+                                    <div class="form-text">Nous vous enverrons une confirmation de commande à cette
+                                        adresse.</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="{{ form.phone.id_for_label }}"
+                                        class="form-label required">Téléphone</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                        {{ form.phone }}
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        Veuillez entrer un numéro de téléphone valide.
+                                    </div>
+                                    <div class="form-text">En cas de problème avec votre commande.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section Type de livraison -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-truck me-2"></i>Type de livraison
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-4">
+                                    {% for choice in form.delivery_type %}
+                                    <div class="form-check mb-2">
+                                        {{ choice.tag }}
+                                        <label class="form-check-label w-100" for="{{ choice.id_for_label }}">
+                                            {{ choice.choice_label }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+
+                                <!-- Section Adresse de livraison (affichée uniquement pour livraison à domicile) -->
+                                <div id="delivery-address-section" style="display: none;">
+                                    <h6 class="mb-3">Adresse de livraison</h6>
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label for="{{ form.address.id_for_label }}" class="form-label">Adresse
+                                                complète</label>
+                                            {{ form.address }}
+                                            <div class="invalid-feedback">
+                                                Veuillez fournir une adresse de livraison.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.postal_code.id_for_label }}" class="form-label">Code
+                                                postal</label>
+                                            {{ form.postal_code }}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.city.id_for_label }}" class="form-label">Ville</label>
+                                            {{ form.city }}
+                                            <div class="invalid-feedback">
+                                                Veuillez indiquer la ville de livraison.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-check mb-3 mt-4">
+                                    <input class="form-check-input" type="checkbox" id="same-as-billing"
+                                        name="same_as_billing" checked>
+                                    <label class="form-check-label" for="same-as-billing">
+                                        Même adresse pour la facturation
+                                    </label>
+                                </div>
+
+                                <div id="shipping-address">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.shipping_address1.id_for_label }}"
+                                                class="form-label required">Adresse</label>
+                                            {{ form.shipping_address1 }}
+                                            <div class="invalid-feedback">
+                                                Veuillez entrer une adresse.
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.shipping_address2.id_for_label }}"
+                                                class="form-label">Complément d'adresse</label>
+                                            {{ form.shipping_address2 }}
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="{{ form.shipping_postal_code.id_for_label }}"
+                                                class="form-label required">Code postal</label>
+                                            {{ form.shipping_postal_code }}
+                                            <div class="invalid-feedback">
+                                                Veuillez entrer un code postal valide.
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.shipping_city.id_for_label }}"
+                                                class="form-label required">Ville</label>
+                                            {{ form.shipping_city }}
+                                            <div class="invalid-feedback">
+                                                Veuillez entrer une ville.
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2 mb-3">
+                                            <label for="{{ form.shipping_country.id_for_label }}"
+                                                class="form-label required">Pays</label>
+                                            {{ form.shipping_country }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="billing-address" class="mt-4" style="display: none;">
+                                    <h6 class="mb-3">Adresse de facturation</h6>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.billing_address1.id_for_label }}"
+                                                class="form-label">Adresse</label>
+                                            {{ form.billing_address1 }}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.billing_address2.id_for_label }}"
+                                                class="form-label">Complément d'adresse</label>
+                                            {{ form.billing_address2 }}
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="{{ form.billing_postal_code.id_for_label }}"
+                                                class="form-label">Code postal</label>
+                                            {{ form.billing_postal_code }}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.billing_city.id_for_label }}"
+                                                class="form-label">Ville</label>
+                                            {{ form.billing_city }}
+                                        </div>
+                                        <div class="col-md-2 mb-3">
+                                            <label for="{{ form.billing_country.id_for_label }}"
+                                                class="form-label">Pays</label>
+                                            {{ form.billing_country }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section Paiement -->
+                        <div class="card mb-4" id="payment-section">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-credit-card me-2"></i>Méthode de paiement
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Options de paiement pour livraison -->
+                                <div id="delivery-payment-options">
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="payment_method"
+                                                id="payment-credit-card" value="credit_card" checked>
+                                            <label class="form-check-label w-100" for="payment-credit-card">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <i class="bi bi-credit-card"></i>
+                                                        <span>Paiement par carte bancaire</span>
+                                                    </div>
+                                                    <div class="payment-icons">
+                                                        <img src="{% static 'img/visa.png' %}" alt="Visa"
+                                                            class="payment-icon">
+                                                        <img src="{% static 'img/mastercard.png' %}" alt="Mastercard"
+                                                            class="payment-icon">
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                        <div class="payment-method-details mt-3" id="credit-card-details">
+                                            <div class="row">
+                                                <div class="col-12 mb-3">
+                                                    <label for="card-number" class="form-label required">Numéro de
+                                                        carte</label>
+                                                    <input type="text" class="form-control" id="card-number"
+                                                        placeholder="1234 5678 9012 3456" required>
+                                                    <div class="invalid-feedback">
+                                                        Veuillez entrer un numéro de carte valide.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="card-expiry" class="form-label required">Date
+                                                        d'expiration</label>
+                                                    <input type="text" class="form-control" id="card-expiry"
+                                                        placeholder="MM/AA" required>
+                                                    <div class="invalid-feedback">
+                                                        Veuillez entrer une date d'expiration valide.
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="card-cvc"
+                                                        class="form-label required">Cryptogramme</label>
+                                                    <input type="text" class="form-control" id="card-cvc"
+                                                        placeholder="CVC" required>
+                                                    <div class="invalid-feedback">
+                                                        Veuillez entrer un cryptogramme valide.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <label for="card-name" class="form-label required">Nom sur la
+                                                        carte</label>
+                                                    <input type="text" class="form-control" id="card-name"
+                                                        placeholder="M. Jean DUPONT" required>
+                                                    <div class="invalid-feedback">
+                                                        Veuillez entrer le nom figurant sur la carte.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Options de paiement pour retrait en magasin -->
+                                <div id="pickup-payment-options" style="display: none;">
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="payment_method"
+                                                id="payment-lumicash" value="lumicash" checked>
+                                            <label class="form-check-label w-100" for="payment-lumicash">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-phone me-2"></i>
+                                                    <span>Lumicash</span>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="payment_method"
+                                                id="payment-ecocash" value="ecocash">
+                                            <label class="form-check-label w-100" for="payment-ecocash">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-phone me-2"></i>
+                                                    <span>EcoCash</span>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="payment_method"
+                                                id="payment-ihela" value="ihela">
+                                            <label class="form-check-label w-100" for="payment-ihela">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-bank me-2"></i>
+                                                    <span>Ihela</span>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section Commentaires -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-chat-square-text me-2"></i>Commentaires
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="{{ form.notes.id_for_label }}" class="form-label">Instructions spéciales
+                                        pour cette commande (optionnel)</label>
+                                    {{ form.notes }}
+                                    <div class="form-text">
+                                        Des instructions spéciales pour la livraison, des détails sur votre commande,
+                                        etc.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Colonne de droite - Récapitulatif -->
+                    <div class="col-lg-4">
+                        <div class="card sticky-top" style="top: 20px;">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-cart-check me-2"></i>Récapitulatif de la commande
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="order-summary">
+                                    {% for item in cart %}
+                                    <div class="order-summary-item">
+                                        <div>
+                                            <span class="fw-bold">{{ item.quantity }}x</span> {{ item.product.name }}
+                                            {% if item.size %}
+                                            <br><small class="text-muted">Taille: {{ item.size }}</small>
+                                            {% endif %}
+                                            {% if item.color %}
+                                            <br><small class="text-muted">Couleur: {{ item.color }}</small>
+                                            {% endif %}
+                                        </div>
+                                        <div class="fw-bold">{{ item.total_price|floatformat:2 }} €</div>
+                                    </div>
+                                    {% endfor %}
+
+                                    <div class="order-summary-item pt-3">
+                                        <div>Sous-total</div>
+                                        <div>{{ cart.get_total_price|floatformat:2 }} €</div>
+                                    </div>
+
+                                    <div class="order-summary-item">
+                                        <div>Livraison</div>
+                                        <div id="shipping-cost">
+                                            {% if cart.get_total_price >= 50 %}
+                                            <span class="text-success">Offerte</span>
+                                            {% else %}
+                                            5,90 €
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    {% if cart.coupon %}
+                                    <div class="order-summary-item">
+                                        <div>
+                                            Code promo "{{ cart.coupon.code }}"
+                                            <form action="{% url 'coupons:remove' %}" method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-link p-0 ms-2">
+                                                    <i class="bi bi-x-circle text-danger"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                        <div class="text-danger">-{{ cart.get_discount|floatformat:2 }} €</div>
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="order-summary-item pt-3 border-top">
+                                        <div class="fw-bold">Total</div>
+                                        <div class="fw-bold fs-5 text-primary" id="total-amount">
+                                            {{ cart.get_total_price_after_discount|floatformat:2 }} €
+                                            {% if cart.get_total_price < 50 %} {% widthratio cart.get_total_price 1 1 as
+                                                total %} {% with total_plus_shipping=total|add:5.90 %} {{
+                                                total_plus_shipping|floatformat:2 }} € {% endwith %} {% else %} {{
+                                                </div>
+                                        </div>
+
+                                        <div class="d-grid mt-3">
+                                            <button type="submit" class="btn btn-primary btn-lg">
+                                                <i class="bi bi-lock-fill me-2"></i>Payer maintenant
+                                            </button>
+                                        </div>
+                                        {% endif %}
+
+                                        <div class="d-grid mt-3">
+                                            <button type="submit" class="btn btn-primary btn-lg">
+                                                <i class="bi bi-lock-fill me-2"></i>Payer maintenant
+                                            </button>
+                                        </div>
+
+                                        <div class="mt-3 text-center">
+                                            <small class="text-muted">
+                                                En passant commande, vous acceptez nos
+                                                <a href="{% url 'pages:terms' %}" target="_blank">Conditions Générales
+                                                    de Vente</a>
+                                                et notre <a href="{% url 'pages:privacy' %}" target="_blank">Politique
+                                                    de confidentialité</a>.
+                                            </small>
+                                        </div>
+
+                                        <div class="mt-3 text-center">
+                                            <div class="d-flex justify-content-center gap-3">
+                                                <img src="{% static 'img/ssl-secure.png' %}" alt="Paiement sécurisé"
+                                                    height="40">
+                                                <img src="{% static 'img/visa-secure.png'}" alt="Visa Secure"
+                                                    height="40">
+                                            </div>
+                                            <small class="text-muted d-block mt-2">
+                                                <i class="bi bi-lock-fill"></i> Paiement 100% sécurisé
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Activer la validation des champs du formulaire
+    (function () {
+        'use strict'
+
+        // Récupérer tous les formulaires auxquels nous voulons appliquer le style de validation Bootstrap
+        var forms = document.querySelectorAll('.needs-validation')
+
+        // Boucle sur les champs et empêcher la soumission
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    })()
+
+    // Gestion de l'affichage des champs en fonction du type de livraison
+    document.addEventListener('DOMContentLoaded', function () {
+        // Récupérer les éléments du DOM
+        const deliveryTypeRadios = document.querySelectorAll('input[name="delivery_type"]');
+        const deliveryAddressSection = document.getElementById('delivery-address-section');
+        const sameAsBillingCheckbox = document.getElementById('same-as-billing');
+        const billingAddressSection = document.getElementById('billing-address');
+        const paymentSection = document.getElementById('payment-section');
+        const deliveryPaymentOptions = document.getElementById('delivery-payment-options');
+        const pickupPaymentOptions = document.getElementById('pickup-payment-options');
+
+        // Fonction pour gérer le changement de type de livraison
+        function handleDeliveryTypeChange() {
+            const selectedDeliveryType = document.querySelector('input[name="delivery_type"]:checked');
+
+            if (selectedDeliveryType) {
+                if (selectedDeliveryType.value === 'livraison') {
+                    // Afficher les champs d'adresse pour la livraison à domicile
+                    if (deliveryAddressSection) {
+                        deliveryAddressSection.style.display = 'block';
+
+                        // Rendre les champs obligatoires côté client
+                        const requiredFields = deliveryAddressSection.querySelectorAll('[required]');
+                        requiredFields.forEach(field => {
+                            field.required = true;
+                        });
+                    }
+
+                    // Afficher la section de paiement pour la livraison
+                    if (paymentSection) {
+                        paymentSection.style.display = 'block';
+                        if (deliveryPaymentOptions) deliveryPaymentOptions.style.display = 'block';
+                        if (pickupPaymentOptions) pickupPaymentOptions.style.display = 'none';
+
+                        // Sélectionner le premier mode de paiement par défaut
+                        const firstPaymentMethod = document.querySelector('#delivery-payment-options input[type="radio"]');
+                        if (firstPaymentMethod) firstPaymentMethod.checked = true;
+                    }
+                } else {
+                    // Masquer les champs d'adresse pour le retrait en magasin
+                    if (deliveryAddressSection) {
+                        deliveryAddressSection.style.display = 'none';
+
+                        // Rendre les champs facultatifs côté client
+                        const requiredFields = deliveryAddressSection.querySelectorAll('[required]');
+                        requiredFields.forEach(field => {
+                            field.required = false;
+                        });
+                    }
+
+                    // Masquer complètement la section de paiement pour le retrait en magasin
+                    if (paymentSection) {
+                        paymentSection.style.display = 'none';
+
+                        // Désélectionner tous les boutons radio de paiement
+                        document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+                            radio.checked = false;
+                        });
+                    }
+                }
+            }
+        }
+
+        // Appeler la fonction au chargement de la page pour gérer l'état initial
+        handleDeliveryTypeChange();
+
+        // Écouter les changements sur les boutons radio de type de livraison
+        deliveryTypeRadios.forEach(radio => {
+            radio.addEventListener('change', handleDeliveryTypeChange);
+        });
+
+        // Gestion de l'affichage de l'adresse de facturation
+        sameAsBillingCheckbox.addEventListener('change', function () {
+            if (this.checked) {
+                billingAddressSection.style.display = 'none';
+            } else {
+                billingAddressSection.style.display = 'block';
+            }
+        });
+
+        // Gestion des méthodes de paiement
+        const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
+        paymentMethods.forEach(method => {
+            method.addEventListener('change', function () {
+                // Masquer tous les détails de paiement
+                document.querySelectorAll('.payment-method-details').forEach(detail => {
+                    detail.style.display = 'none';
+                });
+
+                // Afficher les détails de la méthode sélectionnée
+                const detailsId = this.id + '-details';
+                const detailsElement = document.getElementById(detailsId);
+                if (detailsElement) {
+                    detailsElement.style.display = 'block';
+                }
+            });
+        });
+
+        // Gestion du code promo
+        const applyCouponBtn = document.getElementById('apply-coupon');
+        if (applyCouponBtn) {
+            applyCouponBtn.addEventListener('click', function () {
+                const couponCode = document.getElementById('coupon-code').value.trim();
+                const couponError = document.getElementById('coupon-error');
+
+                if (!couponCode) {
+                    couponError.textContent = 'Veuillez entrer un code promo';
+                    couponError.style.display = 'block';
+                    return;
+                }
+
+                // Envoyer une requête AJAX pour appliquer le code promo
+                fetch(`/coupons/apply/?code=${encodeURIComponent(couponCode)}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFTTOKEN': '{{ csrf_token }}',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            // Recharger la page pour mettre à jour le panier
+                            window.location.reload();
+                        } else {
+                            couponError.textContent = data.message || 'Code promo invalide';
+                            couponError.style.display = 'block';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        couponError.textContent = 'Une erreur est survenue. Veuillez réessayer.';
+                        couponError.style.display = 'block';
+                    });
+            });
+        }
+
+        // Formatage du numéro de carte de crédit
+        const cardNumber = document.getElementById('card-number');
+        if (cardNumber) {
+            cardNumber.addEventListener('input', function (e) {
+                let value = e.target.value.replace(/\s+/g, '');
+                if (value.length > 0) {
+                    value = value.match(new RegExp('.{1,4}', 'g')).join(' ');
+                }
+                e.target.value = value;
+            });
+        }
+
+        // Formatage de la date d'expiration
+        const cardExpiry = document.getElementById('card-expiry');
+        if (cardExpiry) {
+            cardExpiry.addEventListener('input', function (e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length >= 2) {
+                    value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                }
+                e.target.value = value;
+            });
+        }
+
+        // Formatage du CVC
+        const cardCvc = document.getElementById('card-cvc');
+        if (cardCvc) {
+            cardCvc.addEventListener('input', function (e) {
+                e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
+            });
+        }
+    });
+</script>
+{% endblock %}

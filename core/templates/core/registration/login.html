@@ -1,0 +1,55 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Connexion - Boutique en Ligne{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-center">Connexion</h2>
+            </div>
+            <div class="card-body">
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    Votre nom d'utilisateur et votre mot de passe ne correspondent pas. Veuillez réessayer.
+                </div>
+                {% endif %}
+
+                {% if next %}
+                {% if user.is_authenticated %}
+                <div class="alert alert-warning">
+                    Votre compte n'a pas accès à cette page. Pour continuer, veuillez vous connecter avec un compte qui
+                    y a accès.
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    Veuillez vous connecter pour voir cette page.
+                </div>
+                {% endif %}
+                {% endif %}
+
+                <form method="post" action="{% url 'core:login' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Nom d'utilisateur</label>
+                        <input type="text" name="username" class="form-control" id="id_username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_password" class="form-label">Mot de passe</label>
+                        <input type="password" name="password" class="form-control" id="id_password" required>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Se connecter</button>
+                        <input type="hidden" name="next" value="{{ next }}">
+                    </div>
+                </form>
+
+                <div class="mt-3 text-center">
+                    <p>Pas encore de compte ? <a href="#">Contactez l'administrateur</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Facture #{{ order.id }} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media print {
+        body {
+            font-size: 12px;
+            color: #000;
+            background: #fff;
+        }
+
+        .no-print {
+            display: none !important;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+        }
+
+        .card {
+            border: none;
+            box-shadow: none;
+        }
+
+        .btn {
+            display: none;
+        }
+    }
+
+    .invoice-header {
+        border-bottom: 2px solid #e9ecef;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+    }
+
+    .invoice-address {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 0.25rem;
+    }
+
+    .invoice-table th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .totals-table {
+        width: 300px;
+        margin-left: auto;
+    }
+
+    .totals-table td:last-child {
+        text-align: right;
+        font-weight: bold;
+    }
+
+    .company-logo {
+        max-height: 80px;
+        margin-bottom: 1rem;
+    }
+
+    .invoice-title {
+        color: #0d6efd;
+        font-weight: 600;
+    }
+
+    .payment-info {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.25rem;
+        margin-top: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <h1 class="h3 mb-0">Facture #{{ order.id }}</h1>
+        <div>
+            <button onclick="window.print()" class="btn btn-primary me-2">
+                <i class="bi bi-printer me-1"></i> Imprimer
+            </button>
+            <a href="{% url 'shop:product_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Retour à la boutique
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <!-- En-tête de la facture -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <img src="{% static 'img/logo.png' %}" alt="Logo" class="company-logo">
+                    <h2 class="h5 mb-0">Votre Entreprise</h2>
+                    <p class="mb-1">123 Rue du Commerce</p>
+                    <p class="mb-1">75001 Paris, France</p>
+                    <p class="mb-1">Tél: +33 1 23 45 67 89</p>
+                    <p class="mb-0">Email: contact@votreboutique.com</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <h1 class="h4 invoice-title mb-3">FACTURE</h1>
+                    <p class="mb-1"><strong>N° Facture:</strong> {{ order.id }}</p>
+                    <p class="mb-1"><strong>Date:</strong> {{ today|date:"d/m/Y" }}</p>
+                    <p class="mb-1"><strong>Référence client:</strong> {{ order.user.id|stringformat:"06d" }}</p>
+                    <p class="mb-0"><strong>Statut:</strong>
+                        <span class="badge bg-success">Payée</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="invoice-address">
+                        <h6 class="fw-bold mb-3">Facturé à:</h6>
+                        <p class="mb-1"><strong>{{ order.first_name }} {{ order.last_name }}</strong></p>
+                        {% if order.address %}
+                        <p class="mb-1">{{ order.address }}</p>
+                        <p class="mb-1">
+                            {% if order.postal_code %}{{ order.postal_code }}{% endif %}
+                            {% if order.city %}{{ order.city }}{% endif %}
+                        </p>
+                        {% else %}
+                        <p class="mb-1">Retrait en magasin</p>
+                        {% endif %}
+                        <p class="mb-1">Email: {{ order.email }}</p>
+                        <p class="mb-0">Tél: {{ order.phone|default:"Non renseigné" }}</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="invoice-address">
+                        <h6 class="fw-bold mb-3">Détails de la commande:</h6>
+                        <p class="mb-1"><strong>Date de commande:</strong> {{ order.created|date:"d/m/Y H:i" }}</p>
+                        <p class="mb-1"><strong>Méthode de paiement:</strong>
+                            {% if order.payment_method == 'credit_card' %}
+                            Carte bancaire
+                            {% elif order.payment_method == 'paypal' %}
+                            PayPal
+                            {% else %}
+                            {{ order.get_payment_method_display }}
+                            {% endif %}
+                        </p>
+                        <p class="mb-1"><strong>Mode de livraison:</strong>
+                            {{ order.get_delivery_type_display }}
+                        </p>
+                        {% if order.notes %}
+                        <p class="mb-0"><strong>Notes:</strong> {{ order.notes }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Détails de la commande -->
+            <div class="table-responsive mb-4">
+                <table class="table invoice-table">
+                    <thead>
+                        <tr>
+                            <th>Produit</th>
+                            <th class="text-end">Prix unitaire</th>
+                            <th class="text-center">Quantité</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>
+                                {{ item.product.name }}
+                                {% if item.variants %}
+                                <div class="text-muted small">
+                                    {{ item.variants }}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">{{ item.price|floatformat:2 }} €</td>
+                            <td class="text-center">{{ item.quantity }}</td>
+                            <td class="text-end">{% widthratio item.price 1 item.quantity %} €</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Totaux -->
+            <div class="row">
+                <div class="col-lg-5 ms-auto">
+                    <table class="table table-sm totals-table">
+                        <tbody>
+                            <tr>
+                                <td>Sous-total HT:</td>
+                                <td>{{ total_ht|floatformat:2 }} €</td>
+                            </tr>
+                            <tr>
+                                <td>TVA ({{ tva_rate|floatformat:0 }}%):</td>
+                                <td>{{ montant_tva|floatformat:2 }} €</td>
+                            </tr>
+                            <tr class="table-active">
+                                <td><strong>Total TTC:</strong></td>
+                                <td><strong>{{ total_ttc|floatformat:2 }} €</strong></td>
+                            </tr>
+                            {% if order.delivery_type == 'livraison' and order.shipping_cost > 0 %}
+                            <tr>
+                                <td>Frais de livraison:</td>
+                                <td>{{ order.shipping_cost|floatformat:2 }} €</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Informations de paiement -->
+            {% if order.payment_method == 'bank_transfer' %}
+            <div class="payment-info">
+                <h6 class="fw-bold mb-2">Instructions de paiement:</h6>
+                <p class="mb-1">Veuillez effectuer le virement sur le compte suivant :</p>
+                <p class="mb-1"><strong>Bénéficiaire:</strong> Votre Entreprise</p>
+                <p class="mb-1"><strong>IBAN:</strong> FR76 XXXX XXXX XXXX XXXX XXXX XXXX</p>
+                <p class="mb-1"><strong>BIC:</strong> XXXXXXXX</p>
+                <p class="mb-0"><strong>Référence:</strong> FACT-{{ order.id }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Mentions légales -->
+            <div class="mt-4 pt-3 border-top text-muted small">
+                <p class="mb-1"><strong>Conditions de paiement:</strong> Paiement à la commande</p>
+                <p class="mb-1"><strong>Délai de livraison:</strong> 2-5 jours ouvrés</p>
+                <p class="mb-0">En cas de question concernant cette facture, veuillez contacter notre service client à
+                    l'adresse contact@votreboutique.com en mentionnant le numéro de facture.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center text-muted small no-print">
+        <p class="mb-0">Merci pour votre confiance !</p>
+        <p class="mb-0">Cette facture est disponible dans votre espace client à tout moment.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Impression automatique au chargement de la page (optionnel)
+    // window.onload = function() {
+    //     window.print();
+    // };
+</script>
+{% endblock %}

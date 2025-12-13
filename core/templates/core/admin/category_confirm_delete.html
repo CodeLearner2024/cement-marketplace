@@ -1,0 +1,40 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Supprimer la catégorie - {{ object.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h2 class="card-title mb-0">Confirmer la suppression</h2>
+            </div>
+            <div class="card-body">
+                <p>Êtes-vous sûr de vouloir supprimer la catégorie <strong>{{ object.name }}</strong> ?</p>
+
+                {% if object.products.exists %}
+                <div class="alert alert-warning">
+                    <h5 class="alert-heading">Attention !</h5>
+                    <p class="mb-0">
+                        Cette catégorie contient {{ object.products.count }} produit(s).
+                        La suppression de cette catégorie affectera ces produits.
+                    </p>
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{% url 'core:category_list' %}" class="btn btn-outline-secondary me-md-2">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Confirmer la suppression
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends 'core/base.html' %}
+{% load currency_tags %}
+
+{% block title %}Gestion des stocks{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">Accueil</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Gestion du stock</li>
+                </ol>
+            </nav>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="bi bi-box-seam"></i> Gestion du stock
+                </h1>
+                <a href="{% url 'core:stock_history_all' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-clock-history"></i> Historique des mouvements
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <i class="bi bi-funnel"></i> Filtres
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="category" class="form-label">Catégorie</label>
+                    <select name="category" id="category" class="form-select">
+                        <option value="">Toutes les catégories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if selected_category==category.id|stringformat:'s'
+                            %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="available" class="form-label">Disponibilité</label>
+                    <select name="available" id="available" class="form-select">
+                        <option value="">Tous les produits</option>
+                        <option value="in_stock" {% if selected_availability=='in_stock' %}selected{% endif %}>En stock
+                        </option>
+                        <option value="out_of_stock" {% if selected_availability=='out_of_stock' %}selected{% endif %}>
+                            Rupture de stock</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-funnel"></i> Filtrer
+                    </button>
+                    <a href="?" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-counterclockwise"></i> Réinitialiser
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tableau des produits -->
+    <div class="card">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-list-check"></i> Liste des produits</span>
+            <span class="badge bg-primary">{{ products|length }} produit(s)</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Produit</th>
+                        <th class="text-center">Catégorie</th>
+                        <th class="text-center">Stock actuel</th>
+                        <th class="text-center">Statut</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="rounded me-3"
+                                    style="width: 50px; height: 50px; object-fit: cover;">
+                                {% else %}
+                                <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center"
+                                    style="width: 50px; height: 50px;">
+                                    <i class="bi bi-box-seam text-muted"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-0">{{ product.name }}</h6>
+                                    <small class="text-muted">{{ product.price|currency }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-secondary">{{ product.category.name }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span
+                                class="fw-bold {% if product.current_stock <= 0 %}text-danger{% else %}text-success{% endif %}">
+                                {{ product.current_stock|default:0 }}
+                            </span>
+                            <small class="text-muted">sac(s)</small>
+                        </td>
+                        <td class="text-center">
+                            {% if product.current_stock > 0 %}
+                            <span class="badge bg-success">En stock</span>
+                            {% else %}
+                            <span class="badge bg-danger">Rupture</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group">
+                                <a href="{% url 'core:stock_entry' product_id=product.id %}"
+                                    class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip"
+                                    title="Ajouter/Retirer du stock">
+                                    <i class="bi bi-plus-slash-minus"></i> Modifier
+                                </a>
+                                <a href="{% url 'core:stock_history' product_id=product.id %}"
+                                    class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip"
+                                    title="Voir l'historique">
+                                    <i class="bi bi-clock-history"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                <p class="mt-2 mb-0">Aucun produit trouvé</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Initialiser les tooltips -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

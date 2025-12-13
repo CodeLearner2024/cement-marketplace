@@ -1,0 +1,62 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Tableau de bord administrateur{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Tableau de bord administrateur</h1>
+
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Produits</h5>
+                        <p class="display-6">{{ product_count }}</p>
+                        <a href="/admin/products/product/" class="text-white">Gérer les produits</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Commandes</h5>
+                        <p class="display-6">{{ order_count }}</p>
+                        <a href="/admin/orders/order/" class="text-white">Voir les commandes</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Utilisateurs</h5>
+                        <p class="display-6">{{ user_count }}</p>
+                        <a href="/admin/auth/user/" class="text-white">Gérer les utilisateurs</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Actions rapides</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2 d-md-flex">
+                    <a href="/admin/products/product/add/" class="btn btn-primary me-md-2">
+                        <i class="bi bi-plus-circle"></i> Ajouter un produit
+                    </a>
+                    <a href="/admin/orders/order/add/" class="btn btn-success me-md-2">
+                        <i class="bi bi-cart-plus"></i> Créer une commande
+                    </a>
+                    <a href="/admin/auth/user/add/" class="btn btn-info text-white me-md-2">
+                        <i class="bi bi-person-plus"></i> Ajouter un utilisateur
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

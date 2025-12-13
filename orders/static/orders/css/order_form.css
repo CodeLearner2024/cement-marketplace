@@ -1,0 +1,133 @@
+/* Styles de base pour le formulaire de commande */
+body {
+    background-color: #f8f9fa;
+}
+
+/* En-tête de la carte */
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+/* Style pour les sections du formulaire */
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #0d6efd;
+}
+
+/* Style pour les champs de formulaire */
+.form-control, .form-select {
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+}
+
+/* Style pour les boutons radio personnalisés */
+.form-check-input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.form-check-label {
+    display: block;
+    padding: 0.75rem 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.form-check-input[type="radio"]:checked + .form-check-label {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* Style pour les champs d'adresse conditionnels */n#address-fields {
+    transition: all 0.3s ease;
+}
+
+/* Style pour les méthodes de paiement */
+.payment-method {
+    margin-bottom: 1rem;
+}
+
+.payment-method-details {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
+    border: 1px solid #dee2e6;
+}
+
+.payment-method-details h6 {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+/* Style pour le bouton de soumission */
+.btn-primary {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+}
+
+/* Style pour les messages d'erreur */
+.invalid-feedback {
+    display: none;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: #dc3545;
+}
+
+.was-validated .form-control:invalid ~ .invalid-feedback,
+.form-control.is-invalid ~ .invalid-feedback {
+    display: block;
+}
+
+/* Style pour les messages d'aide */
+.help-text {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+/* Style pour le récapitulatif de la commande */
+.order-summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.order-summary-item:last-child {
+    border-bottom: none;
+}
+
+/* Style pour les icônes */
+.bi {
+    margin-right: 0.5rem;
+}
+
+/* Style pour les champs obligatoires */
+.required:after {
+    content: " *";
+    color: #dc3545;
+}
+
+/* Style pour les messages d'alerte */
+.alert {
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.25rem;
+}
+
+/* Style pour les champs avec icônes */
+.input-group-text {
+    background-color: #f8f9fa;
+}
