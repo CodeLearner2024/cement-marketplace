@@ -18,6 +18,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Chemin vers le répertoire du projet (un niveau au-dessus de 'cement')
 PROJECT_ROOT = BASE_DIR.parent
 
+# Configuration des sessions
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Utilise la base de données pour stocker les sessions
+SESSION_COOKIE_AGE = 1209600  # Durée de vie du cookie de session en secondes (2 semaines)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # La session expire à la fermeture du navigateur
+SESSION_SAVE_EVERY_REQUEST = True  # Rafraîchit la session à chaque requête
+
 # Configuration du panier
 CART_SESSION_ID = 'cart'
 

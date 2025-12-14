@@ -25,12 +25,11 @@
                     </thead>
                     <tbody>
                         {% for item in cart %}
-                        {% with product=item.product %}
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    {% if product.image %}
-                                    <img src="{{ product.image.url }}" alt="{{ product.name }}"
+                                    {% if item.product.image %}
+                                    <img src="{{ item.product.image }}" alt="{{ item.product.name }}"
                                         class="img-thumbnail me-3"
                                         style="width: 60px; height: 60px; object-fit: cover;">
                                     {% else %}
@@ -40,13 +39,15 @@
                                     </div>
                                     {% endif %}
                                     <div>
-                                        <h6 class="mb-0">{{ product.name }}</h6>
-                                        <small class="text-muted">{{ product.category.name }}</small>
+                                        <h6 class="mb-0">{{ item.product.name|default:"Produit non disponible" }}</h6>
+                                        {% if item.product.category %}
+                                        <small class="text-muted">{{ item.product.category.name }}</small>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </td>
                             <td class="align-middle text-center">
-                                <form action="{% url 'cart:cart_add' product.id %}" method="post" class="d-inline">
+                                <form action="{% url 'cart:cart_add' item.product.id %}" method="post" class="d-inline">
                                     {% csrf_token %}
                                     <div class="input-group input-group-sm" style="width: 120px;">
                                         <input type="number" name="quantity" value="{{ item.quantity }}" min="1"
@@ -60,8 +61,8 @@
                             <td class="align-middle text-end">{{ item.price|currency }}</td>
                             <td class="align-middle text-end fw-bold">{{ item.total_price|currency }}</td>
                             <td class="align-middle text-end">
-                                <form action="{% url 'cart:cart_remove' product.id %}" method="post"
-                                    class="d-inline remove-from-cart-form" data-product-id="{{ product.id }}">
+                                <form action="{% url 'cart:cart_remove' item.product.id %}" method="post"
+                                    class="d-inline remove-from-cart-form" data-product-id="{{ item.product.id }}">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
                                         <i class="bi bi-trash"></i>
@@ -69,7 +70,6 @@
                                 </form>
                             </td>
                         </tr>
-                        {% endwith %}
                         {% endfor %}
                     </tbody>
                     <tfoot>

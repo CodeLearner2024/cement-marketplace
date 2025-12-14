@@ -103,28 +103,38 @@
                         </div>
 
                         <!-- Méthode de paiement -->
-                        <h5 class="mb-3">Méthode de paiement</h5>
-                        <div class="mb-4">
-                            {{ form.payment_method }}
-                            {% if form.payment_method.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.payment_method.errors.0 }}
+                        <div id="payment-method-section">
+                            <h5 class="mb-3">Méthode de paiement</h5>
+                            <div class="mb-4">
+                                {% for radio in form.payment_method %}
+                                <div class="form-check mb-2 payment-method-option"
+                                    data-payment-method="{{ radio.choice_value }}">
+                                    {{ radio.tag }}
+                                    <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                        {{ radio.choice_label }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                                {% if form.payment_method.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.payment_method.errors.0 }}
+                                </div>
+                                {% endif %}
                             </div>
-                            {% endif %}
+                        </div>
 
-                            <!-- Instructions de paiement -->
-                            <div id="payment-instructions" class="mt-3 p-3 bg-light rounded">
-                                <h6>Instructions de paiement :</h6>
-                                <p class="mb-2">Veuillez effectuer le paiement via l'application mobile de votre choix :
-                                </p>
-                                <ul id="payment-details">
-                                    <li><strong>Lumicash</strong> : 0999 999 999</li>
-                                    <li><strong>EcoCash</strong> : 0888 888 888</li>
-                                    <li><strong>Ihela</strong> : 0777 777 777</li>
-                                </ul>
-                                <p class="mb-0 mt-2">Référence: <span id="payment-reference">CMD-{{ request.user.id
-                                        }}-{{ "now" | date:"YmdHis" }}</span></p>
-                            </div>
+                        <!-- Instructions de paiement -->
+                        <div id="payment-instructions" class="mt-3 p-3 bg-light rounded">
+                            <h6>Instructions de paiement :</h6>
+                            <p class="mb-2">Veuillez effectuer le paiement via l'application mobile de votre choix :
+                            </p>
+                            <ul id="payment-details">
+                                <li><strong>Lumicash</strong> : 0999 999 999</li>
+                                <li><strong>EcoCash</strong> : 0888 888 888</li>
+                                <li><strong>Ihela</strong> : 0777 777 777</li>
+                            </ul>
+                            <p class="mb-0 mt-2">Référence: <span id="payment-reference">CMD-{{ request.user.id
+                                    }}-{{ "now" | date:"YmdHis" }}</span></p>
                         </div>
 
                         <!-- Notes -->
@@ -187,29 +197,58 @@
 
 {% block extra_js %}
 <script>
+    // Fonction pour gérer l'affichage des méthodes de paiement en fonction du type de livraison
+    function togglePaymentMethods() {
+        const deliveryType = document.querySelector('input[name="delivery_type"]:checked').value;
+        const paymentMethodSection = document.getElementById('payment-method-section');
+
+        if (deliveryType === 'retrait') {
+            // Masquer complètement la section des méthodes de paiement pour le retrait en magasin
+            if (paymentMethodSection) {
+                paymentMethodSection.style.display = 'none';
+            }
+        } else {
+            // Afficher la section des méthodes de paiement pour la livraison à domicile
+            if (paymentMethodSection) {
+                paymentMethodSection.style.display = 'block';
+            }
+        }
+    }
+
+    // Fonction pour gérer l'affichage des champs d'adresse
+    function toggleAddressFields() {
+        const selectedValue = document.querySelector('input[name="delivery_type"]:checked').value;
+        const addressFields = document.getElementById('address-fields');
+
+        if (selectedValue === 'livraison') {
+            addressFields.style.display = 'block';
+            // Rendre les champs obligatoires
+            document.getElementById('id_address').required = true;
+            document.getElementById('id_city').required = true;
+        } else {
+            addressFields.style.display = 'none';
+            // Rendre les champs facultatifs
+            document.getElementById('id_address').required = false;
+            document.getElementById('id_city').required = false;
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         // Afficher/masquer les champs d'adresse en fonction du type de livraison
         const deliveryType = document.querySelectorAll('input[name="delivery_type"]');
         const addressFields = document.getElementById('address-fields');
 
-        function toggleAddressFields() {
-            const selectedValue = document.querySelector('input[name="delivery_type"]:checked').value;
-            if (selectedValue === 'livraison') {
-                addressFields.style.display = 'block';
-                // Rendre les champs obligatoires
-                document.getElementById('id_address').required = true;
-                document.getElementById('id_city').required = true;
-            } else {
-                addressFields.style.display = 'none';
-                // Rendre les champs facultatifs
-                document.getElementById('id_address').required = false;
-                document.getElementById('id_city').required = false;
-            }
-        }
-
-        // Écouter les changements sur les boutons radio
+        // Écouter les changements sur les boutons radio de livraison
         deliveryType.forEach(radio => {
-            radio.addEventListener('change', toggleAddressFields);
+            radio.addEventListener('change', function () {
+                toggleAddressFields();
+                togglePaymentMethods();
+            });
+        });
+
+        // Initialiser l'état des méthodes de paiement au chargement de la page
+        document.addEventListener('DOMContentLoaded', function () {
+            togglePaymentMethods();
         });
 
         // Initialiser l'état au chargement de la page
