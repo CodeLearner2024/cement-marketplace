@@ -2,9 +2,11 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy, reverse
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, FormView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login
 from products.models import Product, Category
 from .forms import CategoryForm, ProductForm
 
@@ -50,6 +52,12 @@ def product_detail(request, id, slug):
     return render(request, 'core/product/detail.html', context)
 
 
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.urls import reverse_lazy
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from orders.models import Order
+
 @login_required
 def admin_dashboard(request):
     """Vue du tableau de bord administrateur"""
@@ -57,11 +65,13 @@ def admin_dashboard(request):
     if not request.user.is_staff and not request.user.is_superuser:
         return HttpResponseForbidden("Accès refusé")
     
+    User = get_user_model()
+    
     context = {
         'page_title': 'Tableau de bord administrateur',
         'product_count': Product.objects.count(),
-        'order_count': 0,  # À remplacer par le modèle Order quand il sera créé
-        'user_count': 0,    # À remplacer par le modèle User quand il sera créé
+        'order_count': Order.objects.count(),  # Nombre total de commandes
+        'user_count': User.objects.count(),    # Nombre total d'utilisateurs
     }
     return render(request, 'core/admin/dashboard.html', context)
 
@@ -235,3 +245,88 @@ class ProductDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         messages.success(request, 'Le produit a été supprimé avec succès.')
         return super().delete(request, *args, **kwargs)
+
+
+class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = get_user_model()
+    template_name = 'core/admin/user_list.html'
+    context_object_name = 'users'
+    paginate_by = 10
+    
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+    
+    def get_queryset(self):
+        return self.model.objects.all().order_by('-date_joined')
+
+
+class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    model = get_user_model()
+    form_class = UserCreationForm
+    template_name = 'core/admin/user_form.html'
+    success_url = reverse_lazy('core:user_list')
+    
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+    
+    def form_valid(self, form):
+        messages.success(self.request, "L'utilisateur a été créé avec succès.")
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Ajouter un utilisateur'
+        return context
+
+
+class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = get_user_model()
+    form_class = UserChangeForm
+    template_name = 'core/admin/user_form.html'
+    success_url = reverse_lazy('core:user_list')
+    
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+    
+    def get_form_class(self):
+        # Utiliser un formulaire personnalisé si nécessaire
+        return UserChangeForm
+    
+    def form_valid(self, form):
+        messages.success(self.request, "L'utilisateur a été mis à jour avec succès.")
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Modifier {self.object.username}'
+        return context
+
+
+class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = get_user_model()
+    template_name = 'core/admin/user_confirm_delete.html'
+    success_url = reverse_lazy('core:user_list')
+    
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, "L'utilisateur a été supprimé avec succès.")
+        return super().delete(request, *args, **kwargs)
+
+
+class RegisterView(FormView):
+    template_name = 'registration/register.html'
+    form_class = UserCreationForm
+    success_url = reverse_lazy('core:home')
+
+    def form_valid(self, form):
+        user = form.save()
+        login(self.request, user)
+        messages.success(self.request, 'Inscription réussie ! Vous êtes maintenant connecté.')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Créer un compte'
+        return context

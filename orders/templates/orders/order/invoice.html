@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'core/base.html' %}
 {% load static %}
 
 {% block title %}Facture #{{ order.id }} - {{ block.super }}{% endblock %}
@@ -80,6 +80,18 @@
 
 {% block content %}
 <div class="container py-4">
+    <!-- Affichage des messages -->
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="d-flex justify-content-between align-items-center mb-4 no-print">
         <h1 class="h3 mb-0">Facture #{{ order.id }}</h1>
         <div>

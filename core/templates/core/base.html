@@ -126,16 +126,10 @@
                             <li><a class="dropdown-item" href="{% url 'core:product_list_admin' %}">
                                     <i class="bi bi-box-seam me-2"></i>Gérer les produits
                                 </a></li>
-                            <li class="dropdown-divider"></li>
-                            <li class="dropdown-header">Gestion du stock</li>
-                            <li><a class="dropdown-item" href="{% url 'core:stock_management' %}">
-                                    <i class="bi bi-box-arrow-in-down me-2"></i>Gestion du stock
-                                </a></li>
-                            <li><a class="dropdown-item" href="{% url 'core:stock_history_all' %}">
-                                    <i class="bi bi-clock-history me-2"></i>Historique des mouvements
-                                </a></li>
-                            <li class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/admin/orders/order/" class="disabled">
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="{% url 'orders:admin_order_list' %}">
                                     <i class="bi bi-cart-check me-2"></i>Gérer les commandes
                                 </a></li>
                             <li>
@@ -164,41 +158,35 @@
                     <!-- Menu utilisateur -->
                     {% if user.is_authenticated %}
                     <div class="dropdown">
-                        <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-circle me-1"></i> {{ user.username }}
+                        <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center" type="button"
+                            id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle me-1"></i>
+                            <span class="d-none d-md-inline">{{ user.username }}</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            {% if user.is_staff %}
-                            <li><a class="dropdown-item" href="{% url 'core:admin_dashboard' %}">
-                                    <i class="bi bi-speedometer2 me-1"></i> Tableau de bord
-                                </a></li>
                             <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            {% endif %}
-                            <li><a class="dropdown-item" href="#">
-                                    <i class="bi bi-person me-1"></i> Mon compte
-                                </a></li>
-                            <li><a class="dropdown-item" href="#">
-                                    <i class="bi bi-box-seam me-1"></i> Mes commandes
-                                </a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="{% url 'logout' %}">
-                                    <i class="bi bi-box-arrow-right me-1"></i> Déconnexion
+                                <a class="dropdown-item" href="#">
+                                    <i class="bi bi-person me-2"></i> Profil
                                 </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <form method="post" action="{% url 'core:logout' %}" class="d-inline w-100">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{% url 'core:login' %}">
+                                    <button type="submit" class="dropdown-item text-danger w-100 text-start"
+                                        style="background: none; border: none;">
+                                        <i class="bi bi-box-arrow-right me-2"></i> Déconnexion
+                                    </button>
+                                </form>
                             </li>
                         </ul>
                     </div>
                     {% else %}
-                    <a href="{% url 'login' %}" class="btn btn-outline-light me-2">
+                    <a href="/compte/connexion/" class="btn btn-outline-light">
                         <i class="bi bi-box-arrow-in-right me-1"></i> Connexion
-                    </a>
-                    <a href="{% url 'register' %}" class="btn btn-primary">
-                        <i class="bi bi-person-plus me-1"></i> S'inscrire
                     </a>
                     {% endif %}
                 </div>
@@ -206,6 +194,18 @@
     </nav>
 
     <main class="container my-5">
+        <!-- Messages -->
+        {% if messages %}
+        <div class="container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         {% block content %}
         {% endblock %}
     </main>

@@ -96,10 +96,23 @@ class Order(models.Model):
 
     def __str__(self):
         return f'Commande {self.id}'
-
+        
     def get_total_cost(self):
         """Calcule le coût total de la commande"""
         return sum(item.get_cost() for item in self.items.all())
+        
+    def get_status_color(self):
+        """Retourne la classe CSS correspondant au statut de la commande"""
+        status_colors = {
+            'en_attente': 'warning',
+            'payee': 'info',
+            'en_preparation': 'primary',
+            'expediee': 'info',
+            'livree': 'success',
+            'annulee': 'danger',
+            'remboursee': 'secondary',
+        }
+        return status_colors.get(self.status, 'secondary')
 
 
 class OrderItem(models.Model):

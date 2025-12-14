@@ -13,7 +13,7 @@
                     <div class="card-body">
                         <h5 class="card-title">Produits</h5>
                         <p class="display-6">{{ product_count }}</p>
-                        <a href="/admin/products/product/" class="text-white">Gérer les produits</a>
+                        <a href="{% url 'core:product_list_admin' %}" class="text-white">Gérer les produits</a>
                     </div>
                 </div>
             </div>
@@ -23,7 +23,7 @@
                     <div class="card-body">
                         <h5 class="card-title">Commandes</h5>
                         <p class="display-6">{{ order_count }}</p>
-                        <a href="/admin/orders/order/" class="text-white">Voir les commandes</a>
+                        <a href="{% url 'orders:admin_order_list' %}" class="text-white">Voir les commandes</a>
                     </div>
                 </div>
             </div>
@@ -33,7 +33,7 @@
                     <div class="card-body">
                         <h5 class="card-title">Utilisateurs</h5>
                         <p class="display-6">{{ user_count }}</p>
-                        <a href="/admin/auth/user/" class="text-white">Gérer les utilisateurs</a>
+                        <a href="{% url 'core:user_list' %}" class="text-white">Gérer les utilisateurs</a>
                     </div>
                 </div>
             </div>
@@ -45,13 +45,13 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2 d-md-flex">
-                    <a href="/admin/products/product/add/" class="btn btn-primary me-md-2">
+                    <a href="{% url 'core:product_add' %}" class="btn btn-primary me-md-2">
                         <i class="bi bi-plus-circle"></i> Ajouter un produit
                     </a>
-                    <a href="/admin/orders/order/add/" class="btn btn-success me-md-2">
+                    <a href="{% url 'orders:order_create' %}" class="btn btn-success me-md-2">
                         <i class="bi bi-cart-plus"></i> Créer une commande
                     </a>
-                    <a href="/admin/auth/user/add/" class="btn btn-info text-white me-md-2">
+                    <a href="{% url 'core:user_add' %}" class="btn btn-info text-white me-md-2">
                         <i class="bi bi-person-plus"></i> Ajouter un utilisateur
                     </a>
                 </div>

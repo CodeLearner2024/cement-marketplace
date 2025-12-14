@@ -1,0 +1,157 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title|default:"Gestion des utilisateurs" }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">{{ page_title|default:"Formulaire utilisateur" }}</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">
+                                {{ form.username.label }}
+                                {% if form.username.field.required %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.username.errors.0 }}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">{{ form.username.help_text }}</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">
+                                {{ form.email.label }}
+                                {% if form.email.field.required %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.email.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if form.password1 and form.password2 %}
+                        <div class="mb-3">
+                            <label for="{{ form.password1.id_for_label }}" class="form-label">
+                                {{ form.password1.label }}
+                                {% if form.password1.field.required %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.password1.errors.0 }}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">{{ form.password1.help_text }}</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.password2.id_for_label }}" class="form-label">
+                                {{ form.password2.label }}
+                                {% if form.password2.field.required %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.password2.errors.0 }}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">{{ form.password2.help_text }}</small>
+                        </div>
+                        {% endif %}
+
+                        {% if form.is_active is not None %}
+                        <div class="mb-3 form-check form-switch">
+                            {{ form.is_active }}
+                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                {{ form.is_active.label }}
+                            </label>
+                            {% if form.is_active.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.is_active.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        {% if form.is_staff is not None %}
+                        <div class="mb-3 form-check form-switch">
+                            {{ form.is_staff }}
+                            <label class="form-check-label" for="{{ form.is_staff.id_for_label }}">
+                                {{ form.is_staff.label }}
+                            </label>
+                            {% if form.is_staff.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.is_staff.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        {% if form.is_superuser is not None %}
+                        <div class="mb-3 form-check form-switch">
+                            {{ form.is_superuser }}
+                            <label class="form-check-label" for="{{ form.is_superuser.id_for_label }}">
+                                {{ form.is_superuser.label }}
+                            </label>
+                            {% if form.is_superuser.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.is_superuser.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'core:user_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Retour à la liste
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg"></i> Enregistrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Activer les classes Bootstrap sur les champs du formulaire
+    $(document).ready(function () {
+        // Ajouter la classe 'form-control' à tous les champs de type texte, email, password, etc.
+        $('input[type="text"], input[type="email"], input[type="password"]').addClass('form-control');
+
+        // Gestion des erreurs de formulaire
+        $('.is-invalid').closest('.form-group').addClass('has-error');
+
+        // Masquer les messages après 5 secondes
+        setTimeout(function () {
+            $('.alert').fadeOut('slow');
+        }, 5000);
+    });
+</script>
+{% endblock %}

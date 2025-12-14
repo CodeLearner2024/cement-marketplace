@@ -169,5 +169,9 @@ MEDIA_ROOT = PROJECT_ROOT / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Redirection après authentification
+LOGIN_REDIRECT_URL = 'core:home'  # Redirige vers la page d'accueil après connexion
+LOGOUT_REDIRECT_URL = 'core:home'  # Redirige vers la page d'accueil après déconnexion
+LOGIN_URL = 'login'  # URL de la page de connexion

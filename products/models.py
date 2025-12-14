@@ -1,9 +1,8 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
-from django.utils import timezone
-from django.db.models import Sum, F
-from django.db.models.functions import Coalesce
+from django.utils.text import slugify
+from django.urls import reverse
 
 
 class Category(models.Model):
@@ -81,13 +80,6 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    @property
-    def stock_quantity(self):
-        """Retourne la quantité totale en stock pour ce produit"""
-        total = self.stock_entries.aggregate(
-            total=Sum('quantity')
-        )['total']
-        return total if total is not None else 0
 
     class Meta:
         verbose_name = "Produit"
@@ -103,27 +95,16 @@ class Product(models.Model):
         return f"{self.name} ({self.get_cement_type_display()})"
         
     def save(self, *args, **kwargs):
-        from django.utils.text import slugify
-        from django.db import transaction
-        
         if not self.slug:
             # Générer un slug à partir du nom
             self.slug = slugify(self.name)
             
             # Vérifier l'unicité du slug
-            with transaction.atomic():
-                slugs = set(
-                    Product.objects
-                    .filter(slug__startswith=self.slug)
-                    .values_list('slug', flat=True)
-                )
-                
-                # Si le slug existe déjà, ajouter un numéro incrémentiel
-                if self.slug in slugs:
-                    i = 1
-                    while f"{self.slug}-{i}" in slugs:
-                        i += 1
-                    self.slug = f"{self.slug}-{i}"
+            i = 1
+            original_slug = self.slug
+            while Product.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{i}"
+                i += 1
         
         super().save(*args, **kwargs)
 
@@ -140,62 +121,3 @@ class Product(models.Model):
         return total if total > 0 else 0
 
 
-class Stock(models.Model):
-    """Modèle pour gérer les entrées en stock des produits"""
-    product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        related_name='stock_entries',
-        verbose_name="Produit"
-    )
-    quantity = models.IntegerField(
-        verbose_name="Quantité",
-        help_text="Quantité à ajouter au stock (positive pour ajouter, négative pour retirer)",
-        default=0
-    )
-    date_entree = models.DateTimeField(
-        default=timezone.now,
-        verbose_name="Date d'entrée"
-    )
-    notes = models.TextField(
-        blank=True,
-        null=True,
-        verbose_name="Notes"
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "Mouvement de stock"
-        verbose_name_plural = "Mouvements de stock"
-        ordering = ['-date_entree']
-
-    def __str__(self):
-        action = "Ajout" if self.quantity >= 0 else "Retrait"
-        return f"{action} de {abs(self.quantity)} {self.product.name} le {self.date_entree.strftime('%d/%m/%Y')}"
-
-    def save(self, *args, **kwargs):
-        # S'assurer que la date d'entrée est définie
-        if not self.date_entree:
-            self.date_entree = timezone.now()
-            
-        # Vérifier si une entrée similaire existe déjà
-        if self.pk is None:  # Nouvelle entrée
-            existing_entry = Stock.objects.filter(
-                product=self.product,
-                date_entree__date=self.date_entree.date(),
-                notes=self.notes
-            ).first()
-            
-            if existing_entry:
-                # Mettre à jour la quantité existante au lieu de créer une nouvelle entrée
-                existing_entry.quantity += self.quantity
-                existing_entry.save()
-                self.product.save()  # Mettre à jour le produit après la mise à jour du stock
-                return existing_entry
-                
-        # Sauvegarder l'entrée de stock
-        result = super().save(*args, **kwargs)
-        # Mettre à jour le stock du produit
-        self.product.save()
-        return result

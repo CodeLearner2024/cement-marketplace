@@ -26,10 +26,13 @@ urlpatterns = [
     path('panier/', include('cart.urls', namespace='cart')),
     path('commandes/', include('orders.urls', namespace='orders')),
     
-    # URLs d'authentification
-    path('connexion/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
-    path('deconnexion/', auth_views.LogoutView.as_view(next_page='core:home'), name='logout'),
-    path('compte/', include('django.contrib.auth.urls')),
+    # URLs d'authentification personnalisées
+    path('compte/connexion/', auth_views.LoginView.as_view(template_name='registration/login.html', next_page='core:home'), name='login'),
+    path('compte/deconnexion/', auth_views.LogoutView.as_view(next_page='core:home'), name='logout'),
+    path('compte/mot-de-passe-oublie/', auth_views.PasswordResetView.as_view(template_name='registration/password_reset_form.html'), name='password_reset'),
+    path('compte/mot-de-passe-reinitialise/', auth_views.PasswordResetDoneView.as_view(template_name='registration/password_reset_done.html'), name='password_reset_done'),
+    path('compte/reinitialisation/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='registration/password_reset_confirm.html'), name='password_reset_confirm'),
+    path('compte/reinitialisation-terminee/', auth_views.PasswordResetCompleteView.as_view(template_name='registration/password_reset_complete.html'), name='password_reset_complete'),
 ]
 
 # Ajout du support des fichiers médias en développement

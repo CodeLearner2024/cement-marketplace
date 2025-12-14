@@ -1,79 +1,102 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from .models import Stock, Product
+from .models import StockMovement, Product, StockMovementType
 
-class StockForm(forms.ModelForm):
-    operation_type = forms.ChoiceField(
-        choices=[
-            ('add', 'Ajouter au stock'),
-            ('remove', 'Retirer du stock')
-        ],
-        initial='add',
-        widget=forms.RadioSelect,
-        label='Type d\'opération'
-    )
-    
+
+class StockMovementForm(forms.ModelForm):
     class Meta:
-        model = Stock
-        fields = ['quantity', 'date_entree', 'notes']
+        model = StockMovement
+        fields = ['product', 'movement_type', 'quantity', 'reference', 'movement_date', 'notes']
         widgets = {
-            'date_entree': forms.DateInput(
+            'movement_date': forms.DateTimeInput(
                 attrs={
-                    'type': 'date',
+                    'type': 'datetime-local',
                     'class': 'form-control',
-                    'max': timezone.now().strftime('%Y-%m-%d')
-                }
+                    'max': timezone.now().strftime('%Y-%m-%dT%H:%M')
+                },
+                format='%Y-%m-%dT%H:%M'
             ),
             'notes': forms.Textarea(attrs={
-                'rows': 2,
+                'rows': 3,
                 'class': 'form-control',
-                'placeholder': 'Motif de l\'ajout/retrait...'
+                'placeholder': 'Notes supplémentaires...'
+            }),
+            'quantity': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 1,
+                'step': 1
+            }),
+            'reference': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Référence (facultatif)'
             }),
         }
         labels = {
+            'product': 'Produit',
+            'movement_type': 'Type de mouvement',
             'quantity': 'Quantité',
-            'date_entree': 'Date de l\'opération',
-            'notes': 'Commentaire (optionnel)'
+            'reference': 'Référence',
+            'movement_date': 'Date et heure',
+            'notes': 'Notes'
         }
-    
+
     def __init__(self, *args, **kwargs):
-        self.product = kwargs.pop('product', None)
+        product = kwargs.pop('product', None)
         super().__init__(*args, **kwargs)
         
-        # Configuration des champs
-        self.fields['quantity'].widget.attrs.update({
-            'class': 'form-control',
-            'min': '1',
-            'step': '1',
-            'required': True
-        })
+        if product:
+            self.fields['product'].initial = product
+            self.fields['product'].widget = forms.HiddenInput()
         
-        # Si c'est une modification, on désactive le type d'opération
-        if self.instance and self.instance.pk:
-            self.fields['operation_type'].widget.attrs['disabled'] = True
+        # Définir la date et l'heure par défaut
+        self.fields['movement_date'].initial = timezone.now()
+        
+        # Personnaliser le champ de type de mouvement
+        self.fields['movement_type'].choices = StockMovementType.choices
+        self.fields['movement_type'].widget.attrs.update({
+            'class': 'form-select'
+        })
     
     def clean_quantity(self):
         quantity = self.cleaned_data.get('quantity')
         if quantity <= 0:
-            raise ValidationError("La quantité doit être supérieure à zéro.")
+            raise ValidationError("La quantité doit être supérieure à zéro")
         return quantity
     
     def clean(self):
         cleaned_data = super().clean()
-        operation_type = cleaned_data.get('operation_type')
+        movement_type = cleaned_data.get('movement_type')
         quantity = cleaned_data.get('quantity')
+        product = cleaned_data.get('product')
         
-        # Si c'est un retrait, on vérifie qu'il y a assez de stock
-        if operation_type == 'remove' and self.product:
-            current_stock = self.product.current_stock
-            if quantity > current_stock:
-                raise ValidationError({
-                    'quantity': f'Stock insuffisant. Quantité disponible : {current_stock}'
-                })
+        if movement_type and quantity and product:
+            # Pour les sorties, vérifier qu'il y a assez de stock
+            if movement_type in [StockMovementType.OUT, StockMovementType.LOSS]:
+                if quantity > product.stock_quantity:
+                    raise ValidationError({
+                        'quantity': f"Stock insuffisant. Stock actuel: {product.stock_quantity}"
+                    })
         
-        # Si c'est un retrait, on convertit la quantité en négatif
-        if operation_type == 'remove' and quantity > 0:
-            cleaned_data['quantity'] = -quantity
-            
         return cleaned_data
+
+
+class ProductStockForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = ['stock_quantity']
+        labels = {
+            'stock_quantity': 'Nouvelle quantité en stock'
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['stock_quantity'].widget.attrs.update({
+            'class': 'form-control',
+            'min': 0,
+            'step': 1
+        })
+    
+    def save(self, commit=True):
+        # La logique de sauvegarde est gérée dans la vue
+        return super().save(commit=commit)

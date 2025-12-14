@@ -1,0 +1,88 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Modifier la commande #{{ order.id }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Modifier la commande #{{ order.id }}</h1>
+        <a href="{% url 'orders:admin_order_detail' order.id %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Retour aux détails
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="form-label">Statut de la commande</label>
+                            {{ form.status }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Type de livraison</label>
+                            {{ form.delivery_type }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Méthode de paiement</label>
+                            {{ form.payment_method }}
+                        </div>
+
+                        <div class="form-check form-switch mb-4">
+                            {{ form.paid }}
+                            <label class="form-check-label" for="{{ form.paid.id_for_label }}">
+                                Commande payée
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'orders:admin_order_detail' order.id %}"
+                                class="btn btn-outline-secondary me-md-2">
+                                Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg"></i> Enregistrer les modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Résumé de la commande</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-1">
+                        <strong>Client :</strong> {{ order.first_name }} {{ order.last_name }}
+                    </p>
+                    <p class="mb-1">
+                        <strong>Date :</strong> {{ order.created_at|date:"d/m/Y H:i" }}
+                    </p>
+                    <p class="mb-1">
+                        <strong>Total :</strong> {{ order.total_amount }} €
+                    </p>
+                    <hr>
+                    <h6>Articles :</h6>
+                    <ul class="list-unstyled">
+                        {% for item in order.items.all %}
+                        <li class="mb-1">
+                            {{ item.quantity }}x {{ item.product.name }}
+                            <span class="float-end">{{ item.get_cost }} €</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
